@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Woods / Ox Park — Quadro Kanban</title>
+  <meta name="description" content="Kanban por encarregado + Suprimentos (dados via JSON externo)." />
+  <style>
+    :root{
+      --bg:#f5f7fb; --text:#111827; --muted:#475569; --brand:#0e3a6d;
+      --brand2:#0b2a4a; --card:#ffffff; --border:#cbd5e1; --header:#f1f5f9;
+      --ok:#16a34a; --warn:#ca8a04; --late:#b91c1c; --block:#9333ea; --exec:#0ea5e9; --recv:#15803d;
+      --chip:#e2e8f0; --mono:#0f172a;
+      --header-h: 112px; --footer-h: 0px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;background:var(--bg);color:var(--text)}
+
+    header{position:sticky;top:0;z-index:100;color:#fff;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 18px;box-shadow:0 2px 10px rgba(0,0,0,.18);background:linear-gradient(90deg,var(--brand2) 0%, var(--brand) 100%)}
+    .brand{display:flex;align-items:center;gap:16px}
+    .logo-box{width:164px;height:64px;background:#fff;border-radius:10px;border:2px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .logo-img{max-width:100%;max-height:100%;display:none}
+    .logo-ph{width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#0f172a;font-weight:800;letter-spacing:.3px}
+    h1{margin:0;font-size:24px;letter-spacing:.2px}
+    .subtitle{margin-top:2px;font-size:13px;opacity:.9}
+    .meta{ text-align:right; display:flex; flex-direction:column; gap:6px }
+    .stamp{font-size:13px;font-weight:700}
+    .clock{font-variant-numeric:tabular-nums;font-size:12px;opacity:.95}
+
+    /* Quadro de resumo total */
+    .global-totals{margin:12px 16px 0; padding:10px 12px; background:#fff; border:1px solid var(--border); border-radius:12px; box-shadow:0 2px 6px rgba(2,6,23,.06); display:flex; flex-wrap:wrap; align-items:center; gap:10px}
+    .global-totals h3{margin:0 12px 0 0; font-size:14px}
+    .pills{display:flex; flex-wrap:wrap; gap:8px}
+    .pill{font-size:12px;background:#f1f5f9;border:1px solid var(--border);border-radius:999px;padding:6px 10px}
+
+    .board{height:calc(100vh - var(--header-h) - var(--footer-h) - 114px);display:flex;gap:16px;padding:16px;overflow-x:auto;overflow-y:hidden}
+    .column{background:var(--card);border:1px solid var(--border);border-radius:10px;min-width:320px;max-width:520px;flex:1;display:flex;flex-direction:column;height:100%;overflow:hidden}
+    .column h2{position:sticky;top:0;z-index:10;margin:0;padding:12px;background:var(--header);font-size:18px;font-weight:800;text-decoration:underline;border-bottom:1px solid var(--border);text-align:center;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+    .list{flex:1;overflow:auto;padding:10px;overscroll-behavior:contain}
+
+    .task{background:#ffffff;margin:8px 0;border:1px solid var(--border);border-left:10px solid var(--border);border-radius:10px;padding:12px;box-shadow:0 2px 6px rgba(2,6,23,.06);position:relative}
+    .task.overdue{border-left-color:var(--late)}
+    .task.block{border-left-color:var(--block)}
+    .task.exec{border-left-color:var(--exec)}
+    .task.done{border-left-color:var(--ok)}
+    .title{font-weight:800;margin-bottom:6px}
+    .meta-text{font-size:13px;color:#475569}
+    .chip{display:inline-block;background:var(--chip);padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;margin-left:6px}
+    .code{display:inline-block;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:#eef2ff;color:#0f172a;border:1px solid #c7d2fe;padding:2px 6px;border-radius:6px;margin-right:6px}
+
+    .progress{margin-top:8px;background:#e5e7eb;border:1px solid #d1d5db;border-radius:999px;height:10px;overflow:hidden}
+    .progress-inner{height:100%;width:0%;background:linear-gradient(90deg, #60a5fa, #22c55e);transition:width .3s ease}
+    .progress-label{margin-top:4px;font-size:12px;color:#334155;display:flex;justify-content:space-between}
+
+    .section{margin-top:6px;padding-top:6px;border-top:1px dashed var(--border)}
+    .section h3{position:sticky;top:0;z-index:6;margin:0 0 6px;background:var(--header);padding:8px;border:1px solid var(--border);border-radius:8px;text-align:center;font-size:14px}
+    .item{background:#ffffff;border:1px solid var(--border);border-left:8px solid var(--border);border-radius:10px;padding:10px;margin:8px 0;box-shadow:0 2px 6px rgba(2,6,23,.06);position:relative}
+    .item.overdue{border-left-color:var(--late)}
+    .item.soon{border-left-color:var(--warn)}
+    .item.ok{border-left-color:var(--ok)}
+    .item.recv{border-left-color:var(--recv)}
+    .row{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+    .kv{font-size:12px;color:#64748b}
+
+    .crew{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .crew .pill{font-size:12px;background:#f1f5f9;border:1px solid var(--border);border-radius:999px;padding:4px 8px}
+
+    /* Totais por encarregado */
+    .enc-totals{margin:10px 0 2px;padding:10px;border:1px dashed var(--border);border-radius:10px;background:#f8fafc}
+    .enc-totals strong{display:block;margin-bottom:6px}
+
+    footer{padding:10px 16px;border-top:1px solid var(--border);background:#fff;color:#334155;font-size:12px; display:flex; justify-content:space-between; align-items:center; min-height:40px}
+
+    .toolbar{display:flex;gap:8px;align-items:center}
+    .btn{appearance:none;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.15);color:#fff;padding:8px 10px;border-radius:10px;font-size:12px;cursor:pointer}
+    .btn:hover{background:rgba(255,255,255,.22)}
+    .error{color:#b91c1c;font-weight:700}
+
+    .hint{font-size:12px;color:#334155;background:#fff;border:1px dashed var(--border);border-radius:10px;padding:10px}
+    .uploader{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .uploader input[type="file"]{display:none}
+    .uploader label{cursor:pointer;border:1px solid var(--border);background:#fff;padding:6px 10px;border-radius:10px;font-size:12px;color:#0b2a4a}
+
+    #tests{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;white-space:pre-wrap;background:#f8fafc;border:1px solid var(--border);border-radius:10px;padding:10px;max-height:180px;overflow:auto}
+  </style>
+</head>
+<body>
+  <header id="hdr">
+    <div class="brand">
+      <div class="logo-box"><img id="logo" class="logo-img" alt="Logo" /><div id="logoPh" class="logo-ph">LOGO</div></div>
+      <div>
+        <h1>Woods / Ox Park — Quadro Kanban</h1>
+      </div>
+    </div>
+    <div class="meta">
+      <div class="toolbar"><span id="loadState" class="clock"></span></div>
+      <div class="stamp" id="stamp">Quadro atualizado em --/--/---- --:--</div>
+      <div class="clock" id="clock">--:--:--</div>
+    </div>
+  </header>
+
+  <section class="global-totals" aria-live="polite">
+    <h3>Resumo total da equipe em andamento</h3>
+    <div class="pills" id="globalPills"></div>
+  </section>
+
+  <section class="global-totals" id="hintsBox" style="display:none">
+    <div class="hint" id="hints"></div>
+    <div class="uploader">
+      <input type="file" id="fileInput" accept="application/json,.json" />
+      <label for="fileInput">Carregar JSON do computador…</label>
+      <small>ou use <code>?data=URL-DO-JSON</code> na URL</small>
+    </div>
+  </section>
+
+  <div class="board" id="board"></div>
+
+  <footer>
+    <div class="toolbar">
+      <button id="btnTests" class="btn" title="Executar autotestes">Rodar autotestes</button>
+    </div>
+    <div id="tests" aria-live="polite"></div>
+  </footer>
+
+  <script>
+  (function(){
+    'use strict';
+
+    // ===== CONFIG =====
+    var CONFIG = {
+      // Se houver ?data= na URL, usa. Caso contrário, tenta uma lista de caminhos comuns.
+      primary_url: (new URLSearchParams(location.search).get('data') || ''),
+      candidate_urls: ['assets/data.json','data.json']
+    };
+
+    // ===== Helpers =====
+    var DAY=86400000, HOUR=36e5;
+    function parseBRDate(s){ if(!s) return null; var a=s.split('/'); if(a.length!==3) return null; var d=+a[0],m=+a[1],y=+a[2]; var dt=new Date(y,m-1,d,12,0,0); return isNaN(dt)?null:dt }
+    function fmtClock(){ var t=new Date(); var pad=n=>String(n).padStart(2,'0'); return pad(t.getHours())+':'+pad(t.getMinutes())+':'+pad(t.getSeconds()) }
+    function getDueDate(t){ return parseBRDate(t.prazo_esperado||t.prazo||t.previsao||t.data||''); }
+    function dLabel(dateStr){ var d=parseBRDate(dateStr); if(!d) return ''; var delta=Math.floor((d-new Date())/DAY); if(delta===0) return 'D-0'; return (delta>0)?('D-'+delta):('D+'+Math.abs(delta)) }
+    function urgencyByDate(dateStr,status){ if(status==='done'||status==='FINALIZADA')return'done'; if(status==='block')return'block'; if(status==='exec')return'exec'; if(status==='recebido')return'recv'; var d=parseBRDate(dateStr); if(!d)return'ok'; var h=(d-new Date())/HOUR; if(h<=0)return'overdue'; if(h<=48)return'soon'; return'ok' }
+    function weightStatus(s){ if(s==='done'||s==='FINALIZADA')return-2; return 0 }
+    function weightUrgencyByDate(ds){ var d=parseBRDate(ds); if(!d) return 3; var h=(d-new Date())/HOUR; if(h<=0)return 0; if(h<=48)return 1; return 2 }
+    function compareByPrazo(a,b){
+      var wa=weightStatus(a.status),wb=weightStatus(b.status); if(wa!==wb)return wa-wb;
+      if((a.status==='done'||a.status==='FINALIZADA')&&(b.status==='done'||b.status==='FINALIZADA')){
+        var da=getDueDate(a), db=getDueDate(b); if(da&&db)return db-da; if(da&&!db)return-1; if(!da&&db)return 1; return 0 }
+      var ua=weightUrgencyByDate(a.prazo_esperado||a.prazo||a.previsao||a.data||''), ub=weightUrgencyByDate(b.prazo_esperado||b.prazo||b.previsao||b.data||'');
+      if(ua!==ub)return ua-ub;
+      var da2=getDueDate(a), db2=getDueDate(b);
+      if(da2&&db2)return da2-db2; if(da2&&!db2)return-1; if(!da2&&db2)return 1; return 0 }
+    function compareOC(a,b){ var ar=!!a.recebido, br=!!b.recebido;
+      if(ar!==br)return br-ar;
+      if(ar&&br){ var da=parseBRDate(a.recebido), db=parseBRDate(b.recebido);
+        if(da&&db)return db-da; if(da&&!db)return-1; if(!da&&db)return 1; return 0 }
+      return compareByPrazo({status:a.status,prazo:a.previsao},{status:b.status,prazo:b.previsao}) }
+
+    function inferTipo(encNome, titulo){ var n=(encNome||'').toLowerCase(); var tt=(titulo||'').toLowerCase(); if(n.includes('elétrica')||/qdl|lumin|eletrocalha|spda|barramento|csmd|quadro|cofre/.test(tt)) return 'eletrica'; if(n.includes('hidráulica')||/bomba|ralo|pvc|rede|hidr|redutora|tubula|esgoto|pluvial|água/.test(tt)) return 'hidraulica'; return 'apoio'; }
+    function defaultTeam(tipo){ if(tipo==='eletrica') return {eletricistas:2, ajudantes:1}; if(tipo==='hidraulica') return {bombeiros:2, ajudantes:1, pedreiros:0}; return {pedreiros:1, ajudantes:1}; }
+
+    function sumTeams(sum, team){
+      sum.eletricistas = (sum.eletricistas||0) + (team.eletricistas||0);
+      sum.bombeiros    = (sum.bombeiros||0) + (team.bombeiros||0);
+      sum.pedreiros    = (sum.pedreiros||0) + (team.pedreiros||0);
+      sum.ajudantes    = (sum.ajudantes||0) + (team.ajudantes||0);
+      return sum;
+    }
+
+    // ===== DOM =====
+    function el(tag,cls,text){ var e=document.createElement(tag); if(cls)e.className=cls; if(text!=null)e.textContent=text; return e }
+    var boardEl=document.getElementById('board');
+
+    function renderGlobalTotals(DATA){
+      var totals={eletricistas:0,bombeiros:0,pedreiros:0,ajudantes:0};
+      for(var i=0;i<DATA.encarregados.length;i++){
+        var enc=DATA.encarregados[i];
+        var tasks=enc.tarefas||[];
+        for(var j=0;j<tasks.length;j++){
+          var t=tasks[j];
+          if(t.status==='exec' || t.status==='block'){
+            var tipo=inferTipo(enc.nome,t.titulo);
+            var equipe=t.equipe||defaultTeam(tipo);
+            totals=sumTeams(totals,equipe);
+          }
+        }
+      }
+      var pills=document.getElementById('globalPills');
+      pills.innerHTML='';
+      function pill(label,val){ if(val>0) pills.appendChild(el('span','pill', label+': '+val)); }
+      pill('Eletricistas', totals.eletricistas);
+      pill('Bombeiros hidr.', totals.bombeiros);
+      pill('Pedreiros', totals.pedreiros);
+      pill('Ajudantes', totals.ajudantes);
+    }
+
+    function render(DATA){
+      boardEl.innerHTML='';
+      for(var i=0;i<DATA.encarregados.length;i++){
+        var enc=DATA.encarregados[i];
+        var tasks=(enc.tarefas||[]).slice().sort(compareByPrazo);
+        var col=el('section','column'); col.appendChild(el('h2','',enc.nome));
+        var list=el('div','list');
+
+        var runningTotals = {eletricistas:0,bombeiros:0,pedreiros:0,ajudantes:0};
+
+        for(var j=0;j<tasks.length;j++){
+          var t=tasks[j]; var dueStr=t.prazo_esperado||t.prazo||''; var cls=urgencyByDate(dueStr,t.status);
+          var card=el('div','task '+cls);
+
+          var code=el('span','code','#'+(t.codigo||'')); var title=el('span','title',t.titulo); var header=el('div'); header.appendChild(code); header.appendChild(title);
+
+          var meta=el('div','meta-text');
+          var linhas=[]; var label1='Prazo esperado: '+(dueStr||'-'); if(!(t.status==='done'||t.status==='FINALIZADA')) label1+=' • '+dLabel(dueStr||''); linhas.push(label1);
+          if(t.data_conclusao||t.finalizado_em){ linhas.push('Data de conclusão: '+(t.data_conclusao||t.finalizado_em)); }
+          if(t.obs){ linhas.push('Obs.: '+t.obs); }
+          meta.innerHTML=linhas.map(function(p){return '<div>'+p+'</div>';}).join('');
+
+          var statusLabel='Pendente'; if(t.status==='exec')statusLabel='Em execução'; else if(t.status==='block')statusLabel='Bloqueada'; else if(t.status==='done'||t.status==='FINALIZADA')statusLabel='Finalizada 🏆'; else if(cls==='overdue')statusLabel='Atrasada'; meta.appendChild(el('span','chip',statusLabel));
+
+          // Equipe (inferida, com override por t.equipe)
+          var tipo=inferTipo(enc.nome,t.titulo); var equipe=t.equipe||defaultTeam(tipo);
+          var crew=el('div','crew');
+          function addPill(label,q){ if(q>0) crew.appendChild(el('span','pill', label+': '+q)); }
+          addPill('Eletricistas',equipe.eletricistas||0); addPill('Bombeiros hidr.',equipe.bombeiros||0); addPill('Pedreiros',equipe.pedreiros||0); addPill('Ajudantes',equipe.ajudantes||0);
+
+          if(t.status==='exec' || t.status==='block'){
+            runningTotals = sumTeams(runningTotals, equipe);
+          }
+
+          var pct=Math.max(0,Math.min(100,Number(t.pct||0)));
+          var pWrap=el('div','progress'); var pBar=el('div','progress-inner'); pBar.style.width=pct+'%'; pWrap.appendChild(pBar);
+          var pLabel=el('div','progress-label'); pLabel.appendChild(el('span','', 'Avanço: '+pct+'%'));
+          if(cls==='overdue') pLabel.appendChild(el('span','', '⚠️ atenção ao prazo'));
+
+          card.appendChild(header); card.appendChild(meta); card.appendChild(crew); card.appendChild(pWrap); card.appendChild(pLabel);
+          list.appendChild(card);
+        }
+
+        var totalsBox = el('div','enc-totals');
+        totalsBox.appendChild(el('strong','', 'Resumo — equipe em andamento'));
+        var pills = el('div','crew');
+        function pill(label,val){ if(val>0) pills.appendChild(el('span','pill', label+': '+val)); }
+        pill('Eletricistas', runningTotals.eletricistas);
+        pill('Bombeiros hidr.', runningTotals.bombeiros);
+        pill('Pedreiros', runningTotals.pedreiros);
+        pill('Ajudantes', runningTotals.ajudantes);
+        totalsBox.appendChild(pills);
+        list.appendChild(totalsBox);
+
+        col.appendChild(list); boardEl.appendChild(col);
+      }
+
+      // === SUPRIMENTOS ===
+      var sup=el('section','column'); sup.appendChild(el('h2','','Suprimentos')); var sList=el('div','list');
+
+      // Requisições
+      var rqSec=el('div','section'); rqSec.appendChild(el('h3','', 'Requisições em Aberto'));
+      var rqs=(DATA.suprimentos.requisicoes||[]).slice();
+      function parseBRDateLocal(s){ if(!s) return null; var a=s.split('/'); if(a.length!==3) return null; return new Date(+a[2],+a[1]-1,+a[0],12,0,0); }
+      function urgencyByDateLocal(dateStr,status){ if(status==='done'||status==='FINALIZADA')return'done'; var d=parseBRDateLocal(dateStr); if(!d)return'ok'; var h=(d-new Date())/HOUR; if(h<=0)return'overdue'; if(h<=48)return'soon'; return'ok' }
+      for(var r=0;r<rqs.length;r++){
+        var rq=rqs[r]; var clsRq=urgencyByDateLocal(rq.prazo,rq.status);
+        var it=el('div','item '+clsRq);
+        var rowTop=el('div','row'); var left=el('div'); left.appendChild(el('span','code','#'+(rq.codigo||rq.numero||''))); left.appendChild(el('strong','',rq.numero||rq.codigo||'RQ'));
+        rowTop.appendChild(left); rowTop.appendChild(el('span','',rq.status||''));
+        it.appendChild(rowTop);
+        it.appendChild(el('div','kv','Data: '+(rq.data||'-')+' • Prazo: '+(rq.prazo||'-')));
+        it.appendChild(el('div','kv','Responsável: '+(rq.responsavel||'-')+' • Contrato: '+(rq.contrato||'-')+' • Material: '+(rq.material||'-')));
+        it.appendChild(el('div','kv','Aplicação: '+(rq.aplicacao||'-')+' • Obs.: '+(rq.obs||'-')));
+        if(rq.obs_comprador){ it.appendChild(el('div','kv','Obs. comprador: '+rq.obs_comprador)); }
+        rqSec.appendChild(it);
+      }
+      sList.appendChild(rqSec);
+
+      // OCs
+      var ocSec=el('div','section'); ocSec.appendChild(el('h3','', 'Ordens de Compra (OC)'));
+      var ocs=(DATA.suprimentos.ocs||[]).slice();
+      function urgencyOC(oc){ if(oc.recebido) return 'recv'; return urgencyByDate(oc.previsao, oc.status); }
+      for(var o=0;o<ocs.length;o++){
+        var oc=ocs[o]; var it2=el('div','item '+urgencyOC(oc));
+        var rowTop2=el('div','row'); var left2=el('div'); left2.appendChild(el('span','code','#'+(oc.codigo||oc.numero||''))); left2.appendChild(el('strong','',oc.numero||oc.codigo||'OC'));
+        rowTop2.appendChild(left2); rowTop2.appendChild(el('span','',oc.status||'')); it2.appendChild(rowTop2);
+        it2.appendChild(el('div','kv','Fornecedor: '+(oc.fornecedor||'-')+' • Comprador: '+(oc.comprador||'-')+' • Origem: '+(oc.origem_rq||'-')));
+        it2.appendChild(el('div','kv','Material: '+(oc.material||'-')+' • Aplicação: '+(oc.aplicacao||'-')));
+        it2.appendChild(el('div','kv','Emissão: '+(oc.emissao||'-')+' • Previsão: '+(oc.previsao||'-')));
+        it2.appendChild(el('div','kv', oc.recebido?('Recebido em '+oc.recebido):'Pendente'));
+        if(oc.obs_comprador){ it2.appendChild(el('div','kv','Obs. comprador: '+(oc.obs_comprador))); }
+        ocSec.appendChild(it2);
+      }
+      sList.appendChild(ocSec); sup.appendChild(sList); boardEl.appendChild(sup);
+    }
+
+    // ===== Header/Footer util =====
+    function initLogo(src){ var img=document.getElementById('logo'); var ph=document.getElementById('logoPh'); if(!src){img.style.display='none'; ph.style.display='flex'; return;} img.onload=function(){img.style.display='block'; ph.style.display='none';}; img.onerror=function(){img.style.display='none'; ph.style.display='flex';}; img.src=src; }
+    function fmtStampDate(d){ var pad=n=>String(n).padStart(2,'0'); return pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear()+' '+pad(d.getHours())+':'+pad(d.getMinutes()); }
+    function tick(){ document.getElementById('clock').textContent = fmtClock(); }
+    function updateHeaderHeights(){ var h=document.getElementById('hdr').offsetHeight||112; document.documentElement.style.setProperty('--header-h',h+'px'); }
+    function setStamp(){ var d=new Date(); document.getElementById('stamp').textContent='Quadro atualizado em '+fmtStampDate(d); }
+
+    // ===== JSON: resolução de URL, fallback, upload local e mensagens =====
+    function unique(arr){ return Array.from(new Set(arr)); }
+    function resolveDataUrls(){
+      var urls = [];
+      if(CONFIG.primary_url){ urls.push(CONFIG.primary_url); }
+      urls = urls.concat(CONFIG.candidate_urls);
+      return unique(urls).map(function(u){ return new URL(u, location.href).toString(); });
+    }
+
+    var SAMPLE = { // fallback mínimo
+      logo_src: '',
+      encarregados: [],
+      suprimentos: { requisicoes: [], ocs: [] }
+    };
+
+    function showHints(html){ var box=document.getElementById('hintsBox'); var div=document.getElementById('hints'); div.innerHTML=html; box.style.display='block'; }
+    function hideHints(){ var box=document.getElementById('hintsBox'); box.style.display='none'; }
+
+    function cacheBuster(url){ var u = new URL(url, location.href); u.searchParams.set('v', Date.now()); return u.toString(); }
+    function setLoadState(msg, isError){ var el = document.getElementById('loadState'); el.textContent = msg || ''; el.className = 'clock' + (isError? ' error' : ''); }
+
+    async function tryFetch(url){
+      const busted = cacheBuster(url);
+      const res = await fetch(busted, { cache: 'no-store' });
+      if(!res.ok) throw new Error('HTTP '+res.status+' em '+url);
+      const text = await res.text();
+      try{ return JSON.parse(text); }
+      catch(parseErr){ throw new Error('JSON inválido em '+url+': '+parseErr.message); }
+    }
+
+    async function loadData(){
+      setLoadState('Carregando…'); hideHints();
+      var urls = resolveDataUrls();
+      var lastErr = null;
+      for(var i=0;i<urls.length;i++){
+        try{
+          var data = await tryFetch(urls[i]);
+          setLoadState(''); // não exibir "OK" após sucesso
+          return data;
+        }catch(err){
+          console.warn('Falha em', urls[i], err);
+          lastErr = err;
+        }
+      }
+      // Todas as tentativas falharam.
+      setLoadState('Erro ao carregar JSON', true);
+      var corsTip = '';
+      var proto = location.protocol;
+      if(proto === 'file:'){
+        corsTip = '<li>Você abriu o arquivo via <b>file://</b>. O navegador bloqueia <code>fetch()</code> local. Use o botão <b>Carregar JSON do computador</b> abaixo ou publique em um servidor (ex.: GitHub Pages) e use <code>?data=</code> apontando para o JSON.</li>';
+      }else{
+        corsTip = '<li>Se o JSON estiver em outro domínio, verifique CORS (<code>Access-Control-Allow-Origin</code>). Prefira mesmo domínio ou GitHub Pages do mesmo repositório.</li>';
+      }
+      showHints('<b>Não consegui ler o JSON.</b><br><small>'+ (lastErr? lastErr.message : 'sem detalhes') +'</small><ul style="margin:6px 0 0 16px">\
+        <li>Confirme o caminho: <code>?data=assets/data.json</code> (ou o seu).</li>\
+        <li>Garanta que o arquivo existe e está público.</li>'+ corsTip +'</ul>');
+      return SAMPLE;
+    }
+
+    function validateData(data){
+      data = data && typeof data === 'object' ? data : {};
+      data.encarregados = Array.isArray(data.encarregados) ? data.encarregados : [];
+      data.suprimentos = data.suprimentos && typeof data.suprimentos === 'object' ? data.suprimentos : {};
+      data.suprimentos.requisicoes = Array.isArray(data.suprimentos.requisicoes) ? data.suprimentos.requisicoes : [];
+      data.suprimentos.ocs = Array.isArray(data.suprimentos.ocs) ? data.suprimentos.ocs : [];
+      return data;
+    }
+
+    async function boot(){
+      updateHeaderHeights(); tick(); setInterval(tick, 1000);
+      const raw = await loadData();
+      const DATA = validateData(raw);
+      initLogo(DATA.logo_src||'');
+      render(DATA);
+      renderGlobalTotals(DATA);
+      setStamp();
+    }
+
+    // ===== Autotestes (não alteram o comportamento em produção) =====
+    function runTests(){
+      var out=[]; function ok(name,cond){ out.push((cond? '✓ ' : '✗ ')+name); }
+      // Teste 1 — parseBRDate
+      var d = parseBRDate('19/09/2025'); ok('parseBRDate retorna Date válido', d instanceof Date && d.getFullYear()===2025 && (d.getMonth()+1)===9 && d.getDate()===19);
+      // Teste 2 — dLabel hoje
+      var td = new Date(); var pad=n=>String(n).padStart(2,'0'); var today = pad(td.getDate())+'/'+pad(td.getMonth()+1)+'/'+td.getFullYear(); ok('dLabel hoje == D-0', dLabel(today) === 'D-0');
+      // Teste 3 — urgencyByDate passado
+      var past = new Date(Date.now()-3*DAY); var pds = pad(past.getDate())+'/'+pad(past.getMonth()+1)+'/'+past.getFullYear(); ok('urgencyByDate passado == overdue', urgencyByDate(pds,'')==='overdue');
+      // Teste 4 — prioridade de URLs
+      var urls = resolveDataUrls(); ok('resolveDataUrls retorna pelo menos 1 URL', urls.length>0);
+      // Teste 5 — validateData estrutura mínima
+      var vd = validateData({}); ok('validateData adiciona arrays vazios', Array.isArray(vd.encarregados) && Array.isArray(vd.suprimentos.requisicoes) && Array.isArray(vd.suprimentos.ocs));
+      // Teste 6 — ordenação: overdue antes de soon
+      var now = new Date(); var soon = new Date(now.getTime()+36*HOUR); var sSoon = pad(soon.getDate())+'/'+pad(soon.getMonth()+1)+'/'+soon.getFullYear();
+      var sPast = pad(past.getDate())+'/'+pad(past.getMonth()+1)+'/'+past.getFullYear();
+      var arr=[{status:'',prazo:sSoon},{status:'',prazo:sPast}]; arr.sort(compareByPrazo); ok('compareByPrazo prioriza vencidos', (arr[0].prazo===sPast));
+      document.getElementById('tests').textContent = out.join('\n');
+    }
+
+    // ===== Eventos =====
+    document.addEventListener('DOMContentLoaded', function(){
+      boot();
+      document.getElementById('btnTests').addEventListener('click', runTests);
+      window.addEventListener('resize', updateHeaderHeights);
+      // Upload local (quando file:// ou para testes)
+      document.getElementById('fileInput').addEventListener('change', function(ev){
+        var file = ev.target.files && ev.target.files[0]; if(!file) return;
+        var reader = new FileReader();
+        reader.onload = function(){
+          try{
+            hideHints(); setLoadState(''); // não exibir "OK" após sucesso
+            var data = validateData(JSON.parse(String(reader.result||'{}')));
+            initLogo(data.logo_src||'');
+            render(data); renderGlobalTotals(data); setStamp();
+          }catch(err){
+            setLoadState('JSON inválido', true); showHints('Erro ao ler arquivo: '+err.message);
+          }
+        };
+        reader.onerror = function(){ setLoadState('Falha ao ler arquivo', true); };
+        reader.readAsText(file);
+      });
+    });
+
+  })();
+  </script>
+
+  <!--
+  ==========================
+  ESQUEMA DO JSON ESPERADO (copie/cole e edite os valores):
+  Salve em: assets/data.json (ou passe ?data=CAMINHO/URL)
+  ==========================
+  {
+    "logo_src": "assets/logo-woods-ox.jpg?v=1",
+    "encarregados": [
+      {"nome":"Severo (Hidráulica)", "tarefas":[
+        {"codigo":"T-0001","titulo":"Descrição…","inicio":"16/09/2025","prazo_esperado":"19/09/2025","status":"exec","pct":85,"obs":"opcional","equipe":{"bombeiros":2,"ajudantes":1}}
+      ]}
+      /* Adicione mais encarregados aqui */
+    ],
+    "suprimentos": {
+      "requisicoes": [
+        {"codigo":"RQ-11305","numero":"RQ-11305","responsavel":"Nome","contrato":"Woods / Ox Park","material":"Condulete","aplicacao":"-","data":"","prazo":"","status":"Em cotação","obs":"…"}
+      ],
+      "ocs": [
+        {"codigo":"OC-001","numero":"OC-001","emissao":"","fornecedor":"Fornecedor X","status":"EMITIDA","previsao":"25/09/2025","comprador":"Fulano","recebido":"","origem_rq":"RQ-11305","material":"Material Y","aplicacao":"Uso Z","obs_comprador":"Parcial"}
+      ]
+    }
+  }
+  Observações:
+  - Datas no formato dd/mm/aaaa.
+  - status aceitos nas tarefas: "exec", "block", "done" (ou "FINALIZADA"); em OCs: "EMITIDA", e realce "recebido" caso exista a data de recebimento.
+  - Campo opcional "equipe" por tarefa sobrepõe o padrão inferido (eletricistas, bombeiros, pedreiros, ajudantes).
+  - É possível trocar o arquivo JSON pela querystring: ?data=URL-OU-CAMINHO.json
+  - Se abrir este HTML via file://, use o botão "Carregar JSON do computador".
+  -->
+</body>
+</html>
