@@ -1,0 +1,177 @@
+{
+  "logo_src": "assets/logo_woods-ox-park.jpg",
+  "encarregados": [
+    {
+      "nome": "Rogério (Hidráulica)",
+      "tarefas": [
+        {
+          "codigo": "H-101",
+          "titulo": "Teste de estanqueidade — barrilete torre A",
+          "inicio": "18/09/2025",
+          "prazo_esperado": "22/09/2025",
+          "status": "exec",
+          "pct": 65,
+          "equipe": { "bombeiros": 2, "ajudantes": 1 }
+        },
+        {
+          "codigo": "H-102",
+          "titulo": "Instalação de válvulas redutoras — bloco 1 (8º andar)",
+          "inicio": "20/09/2025",
+          "prazo_esperado": "25/09/2025",
+          "status": "",
+          "pct": 0,
+          "obs": "Aguardando liberação da área"
+        },
+        {
+          "codigo": "H-099",
+          "titulo": "Troca de conexões PPR Ø50 — casa de bombas",
+          "inicio": "15/09/2025",
+          "prazo_esperado": "18/09/2025",
+          "status": "done",
+          "pct": 100,
+          "data_conclusao": "18/09/2025"
+        }
+      ]
+    },
+    {
+      "nome": "Karina (Elétrica)",
+      "tarefas": [
+        {
+          "codigo": "E-201",
+          "titulo": "Fechamento de QDLs — 5º ao 7º",
+          "inicio": "17/09/2025",
+          "prazo_esperado": "20/09/2025",
+          "status": "done",
+          "pct": 100,
+          "data_conclusao": "19/09/2025"
+        },
+        {
+          "codigo": "E-202",
+          "titulo": "Lançamento de cabos de dados — subsolo torres A/B",
+          "inicio": "19/09/2025",
+          "prazo_esperado": "24/09/2025",
+          "status": "exec",
+          "pct": 35,
+          "obs": "Trecho central da calha bloqueado por obra civil"
+        },
+        {
+          "codigo": "E-203",
+          "titulo": "SPDA — inspeção e continuidade",
+          "inicio": "21/09/2025",
+          "prazo_esperado": "26/09/2025",
+          "status": "",
+          "pct": 0
+        }
+      ]
+    },
+    {
+      "nome": "Severo (Apoio)",
+      "tarefas": [
+        {
+          "codigo": "A-301",
+          "titulo": "Fechamento de shafts nível térreo",
+          "inicio": "19/09/2025",
+          "prazo_esperado": "22/09/2025",
+          "status": "block",
+          "pct": 20,
+          "obs": "Dependente de inspeção do bombeiro"
+        },
+        {
+          "codigo": "A-302",
+          "titulo": "Readequação de abrigos — equipamentos provisórios",
+          "inicio": "22/09/2025",
+          "prazo_esperado": "27/09/2025",
+          "status": "",
+          "pct": 0,
+          "equipe": { "pedreiros": 2, "ajudantes": 1 }
+        }
+      ]
+    }
+  ],
+  "suprimentos": {
+    "compradores": ["Juliana Prado", "Henrique Lopes"],
+    "pendencias_teams": { "Juliana Prado": 0, "Henrique Lopes": 1 },
+    "requisicoes": [
+      {
+        "codigo": "RQ-32011",
+        "numero": "RQ-32011",
+        "responsavel": "Juliana Prado",
+        "contrato": "Woods / Ox Park",
+        "material": "Conexões PPR Ø50",
+        "aplicacao": "Barrilete A",
+        "data": "18/09/2025",
+        "prazo": "21/09/2025",
+        "status": "Em cotação",
+        "obs": "Aguardando 2ª proposta"
+      },
+      {
+        "codigo": "RQ-32018",
+        "numero": "RQ-32018",
+        "responsavel": "Henrique Lopes",
+        "contrato": "Woods / Ox Park",
+        "material": "Disjuntores curva C 32A",
+        "aplicacao": "QDLs 5º–7º",
+        "data": "19/09/2025",
+        "prazo": "23/09/2025",
+        "status": "Aprovada",
+        "obs": "Prioridade média"
+      },
+      {
+        "codigo": "RQ-32025",
+        "numero": "RQ-32025",
+        "responsavel": "Juliana Prado",
+        "contrato": "Woods / Ox Park",
+        "material": "Eletrocalha 100x50 e acessórios",
+        "aplicacao": "Calha central subsolo",
+        "data": "20/09/2025",
+        "prazo": "26/09/2025",
+        "status": "",
+        "obs": ""
+      }
+    ],
+    "ocs": [
+      {
+        "codigo": "OC-3103",
+        "numero": "OC-3103",
+        "emissao": "20/09/2025",
+        "fornecedor": "EletroCenter RJ",
+        "status": "EMITIDA",
+        "previsao": "25/09/2025",
+        "comprador": "Henrique",
+        "recebido": "",
+        "origem_rq": "RQ-32018",
+        "material": "Disjuntores 32A",
+        "aplicacao": "QDLs",
+        "obs_comprador": "Entrega única"
+      },
+      {
+        "codigo": "OC-3097",
+        "numero": "OC-3097",
+        "emissao": "18/09/2025",
+        "fornecedor": "HidroSul",
+        "status": "recebido",
+        "previsao": "",
+        "comprador": "Juliana",
+        "recebido": "19/09/2025",
+        "origem_rq": "RQ-32011",
+        "material": "Conexões PPR",
+        "aplicacao": "Barrilete",
+        "obs_comprador": "Chegou completo"
+      },
+      {
+        "codigo": "OC-3110",
+        "numero": "OC-3110",
+        "emissao": "",
+        "fornecedor": "MetalFlex",
+        "status": "EMITIDA",
+        "previsao": "27/09/2025",
+        "comprador": "Juliana",
+        "recebido": "",
+        "origem_rq": "RQ-32025",
+        "material": "Eletrocalhas 100x50 + curvas",
+        "aplicacao": "Subsolo",
+        "obs_comprador": "Frete CIF"
+      }
+    ]
+  }
+}
